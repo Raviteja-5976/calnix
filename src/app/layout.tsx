@@ -23,10 +23,6 @@ const mono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Calnix — Less noise. More time.",
   description: "Editorial productivity calendar, tasks, tools, and prompts with team chat.",
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

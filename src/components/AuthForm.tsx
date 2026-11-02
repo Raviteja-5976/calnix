@@ -4,15 +4,58 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 
-export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+type Provider = "google" | "github";
+
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z" />
+      <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24z" />
+      <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.3a12 12 0 0 0 0 10.8l4-3.1z" />
+      <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9z" />
+    </svg>
+  );
+}
+
+function GitHubMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 0-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.2.5-2.3 1.3-3.1-.2-.4-.6-1.6 0-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.6.2 2.8.1 3.2.8.8 1.3 1.9 1.3 3.1 0 4.6-2.8 5.6-5.5 6 .4.3.8 1 .8 2.1v3.1c0 .3.2.7.8.6A12 12 0 0 0 12 .3" />
+    </svg>
+  );
+}
+
+export function AuthForm({
+  mode,
+  initialError = null,
+}: {
+  mode: "login" | "signup";
+  initialError?: string | null;
+}) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const signup = mode === "signup";
+
+  async function continueWith(provider: Provider) {
+    setBusy(true);
+    setError(null);
+    // The callback must be on the same origin that started sign-in, since the
+    // PKCE verifier is stored in a cookie on this origin.
+    const { error: authError } = await supabaseBrowser().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    });
+    // On success the browser is already navigating to the provider.
+    if (authError) {
+      setBusy(false);
+      setError(authError.message);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,6 +81,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setBusy(false);
     if (authError) {
       setError(authError.message);
+    } else if (signup && data.user && data.user.identities?.length === 0) {
+      // Supabase answers this way when the email already belongs to an account,
+      // for example one first created with Google or GitHub.
+      setError(
+        "An account with this email already exists. Sign in with your password, or continue with Google or GitHub.",
+      );
     } else if (signup && !data.session) {
       setNotice(`Check ${email} for a link to confirm your account.`);
     } else {
@@ -131,16 +180,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </div>
 
       <section className="auth-panel">
-        <div className="auth-logo-badge">
+        <Link href="/" className="auth-logo-badge" aria-label="Calnix home">
           <Image
             src="/logo.png"
-            alt="Calnix"
+            alt=""
             width={40}
             height={40}
             className="auth-logo-img"
           />
           <h1 className="wordmark">Calnix</h1>
-        </div>
+        </Link>
 
         <p className="auth-lede">
           {signup
@@ -153,6 +202,20 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             {notice}
           </p>
         ) : (
+          <div className="stack">
+          <div className="oauth-buttons">
+            <button type="button" className="btn oauth-btn" disabled={busy} onClick={() => continueWith("google")}>
+              <GoogleMark />
+              <span>Continue with Google</span>
+            </button>
+            <button type="button" className="btn oauth-btn" disabled={busy} onClick={() => continueWith("github")}>
+              <GitHubMark />
+              <span>Continue with GitHub</span>
+            </button>
+          </div>
+          <p className="auth-divider">
+            <span>or with email</span>
+          </p>
           <form onSubmit={submit} className="stack">
             {signup && (
               <label className="field">
@@ -197,6 +260,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               <ArrowRight size={16} />
             </button>
           </form>
+          </div>
         )}
 
         <p className="auth-switch">
