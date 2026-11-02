@@ -66,7 +66,9 @@ export function AuthForm({
     setError(null);
 
     const supabase = supabaseBrowser();
-    const site = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    // The address this page was opened on, so the link returns to the same site
+    // (it also holds the PKCE cookie the callback needs).
+    const site = window.location.origin;
     const { data, error: authError } = signup
       ? await supabase.auth.signUp({
           email,

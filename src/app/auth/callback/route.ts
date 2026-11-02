@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { publicOrigin } from "@/lib/public-origin";
 import { supabaseServer } from "@/lib/supabase/server";
 
 /**
@@ -8,13 +9,14 @@ import { supabaseServer } from "@/lib/supabase/server";
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const origin = publicOrigin(request);
   const code = url.searchParams.get("code");
   if (code) {
     const supabase = await supabaseServer();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL("/calendar", url.origin));
+    if (!error) return NextResponse.redirect(new URL("/calendar", origin));
   }
   // Providers report a cancelled or refused sign-in with ?error=...
   const reason = url.searchParams.has("error") ? "oauth" : "confirm";
-  return NextResponse.redirect(new URL(`/login?error=${reason}`, url.origin));
+  return NextResponse.redirect(new URL(`/login?error=${reason}`, origin));
 }

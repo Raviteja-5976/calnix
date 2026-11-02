@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicOrigin } from "@/lib/public-origin";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth"];
 
@@ -28,10 +29,7 @@ export async function proxy(request: NextRequest) {
 
   // API routes answer 401 themselves rather than redirecting.
   if (!data?.claims && !isPublic && !pathname.startsWith("/api/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL("/login", publicOrigin(request)));
   }
 
   return response;
