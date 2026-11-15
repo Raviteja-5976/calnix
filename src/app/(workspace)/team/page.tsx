@@ -1,6 +1,6 @@
 import { TeamView } from "@/components/TeamView";
 
-export const metadata = { title: "Team | Calnix" };
+export const metadata = { title: "Team · DTA-Cal" };
 
 export default function TeamPage() {
   return <TeamView />;

@@ -11,7 +11,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   const { data: memberships } = await supabase
     .from("org_members")
-    .select("role, organizations(id, name)")
+    .select("role, organizations(id, name, ai_enabled)")
     .eq("user_id", auth.user.id)
     .order("joined_at");
 

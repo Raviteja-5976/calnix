@@ -51,24 +51,24 @@ export default function OnboardingPage() {
             width: 44,
             height: 44,
             borderRadius: 8,
-            background: "#252822",
-            border: "1px solid #383B33",
+            background: "#FFF8F0",
+            border: "3px solid #1B1F3B", boxShadow: "3px 3px 0 #1B1F3B",
             display: "grid",
             placeItems: "center",
           }}
         >
           <Image
             src="/logo.png"
-            alt="Calnix Logo"
+            alt="DTA-Cal Logo"
             width={32}
             height={32}
             priority
           />
         </div>
         <div>
-          <h1 className="wordmark">Calnix</h1>
+          <h1 className="wordmark">DTA-Cal</h1>
           <p className="hint" style={{ letterSpacing: "0.03em" }}>
-            LESS NOISE. MORE TIME.
+            PLAN IT. TRACK IT. SHIP IT.
           </p>
         </div>
       </div>

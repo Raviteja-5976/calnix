@@ -58,3 +58,13 @@ export function dateRangeLabel(start: string | null, end: string | null) {
   if (!start) return "No date";
   return !end || start === end ? shortDate(start) : `${shortDate(start)} to ${shortDate(end)}`;
 }
+
+/** "just now", "5m ago", "3h ago", "2d ago", or a short date for older times. */
+export function relativeTime(timestamp: string, now = Date.now()) {
+  const seconds = Math.max(0, Math.round((now - Date.parse(timestamp)) / 1000));
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  if (seconds < 7 * 86400) return `${Math.floor(seconds / 86400)}d ago`;
+  return new Date(timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}

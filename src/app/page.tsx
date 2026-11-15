@@ -1,10 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { ArrowRight, CalendarDays, Library, MessagesSquare, Sparkles } from "lucide-react";
+import { ArrowRight, CalendarDays, FileText, FolderKanban, Sparkles } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 
-export const metadata = { title: "Calnix — Less noise. More time." };
+export const metadata = { title: "DTA-Cal — Plan it. Track it. Ship it." };
 
 const DAYS = [
   ["Mon", 3],
@@ -19,51 +19,51 @@ const TODAY = 3; // index into DAYS: Thursday
 
 // col/span place each band on the week grid; row is its lane under the day headers.
 const BANDS = [
-  { kind: "task", title: "Sprint planning · Q4 roadmap", col: 1, span: 3, row: 2 },
-  { kind: "event", title: "Design review", col: 4, span: 2, row: 2, hatch: true },
-  { kind: "prompt", title: "Release notes prompt", col: 2, span: 4, row: 3 },
-  { kind: "tool", title: "Figma tokens", col: 6, span: 2, row: 3 },
-  { kind: "task", title: "Ship v2.0", col: 3, span: 3, row: 4, hatch: true },
+  { kind: "task", title: "Write course outline", col: 1, span: 3, row: 2 },
+  { kind: "event", title: "Sprint review", col: 4, span: 2, row: 2, hatch: true },
+  { kind: "prompt", title: "Record module 1", col: 2, span: 4, row: 3 },
+  { kind: "tool", title: "API spec", col: 6, span: 2, row: 3 },
+  { kind: "task", title: "Beta launch", col: 3, span: 3, row: 4, hatch: true },
   { kind: "event", title: "Team retro", col: 1, span: 2, row: 5 },
-  { kind: "tool", title: "Analytics dashboard", col: 4, span: 4, row: 5 },
+  { kind: "tool", title: "Signup flow board", col: 4, span: 4, row: 5 },
 ];
 
 const FEATURES = [
   {
-    icon: CalendarDays,
+    icon: FolderKanban,
     tone: "task",
-    title: "One calendar",
-    body: "Tasks and events for you and your team, laid out as bands across the week.",
+    title: "Projects that ship",
+    body: "Every project gets a goal, milestones and tasks, with board, list and timeline views and live progress.",
   },
   {
-    icon: Library,
+    icon: CalendarDays,
+    tone: "event",
+    title: "One team calendar",
+    body: "Tasks, events and milestones for you and your team, laid out across the week.",
+  },
+  {
+    icon: FileText,
     tone: "tool",
-    title: "A shared library",
-    body: "Keep the tools and prompts your team reaches for next to the work that uses them.",
+    title: "Docs & whiteboards",
+    body: "Markdown notes with [[links]] and backlinks, plus whiteboards, in nested folders inside each project.",
   },
   {
     icon: Sparkles,
     tone: "prompt",
-    title: "Written for you",
-    body: "Every entry gets a short description and a cover illustration, generated automatically.",
-  },
-  {
-    icon: MessagesSquare,
-    tone: "event",
-    title: "Team chat",
-    body: "Talk it through in team channels and direct messages without leaving your plan.",
+    title: "AI when you ask",
+    body: "Draft a project plan, break down a milestone, write a doc or sketch a diagram. Nothing runs until you click.",
   },
 ] as const;
 
 const MARQUEE = [
-  ["task", "Quarterly planning"],
+  ["task", "Milestone: Beta ready"],
   ["event", "Client kickoff"],
-  ["tool", "Linear"],
-  ["prompt", "Summarise this PR"],
-  ["task", "Design QA"],
+  ["tool", "API spec.md"],
+  ["prompt", "Plan this project ✨"],
+  ["task", "Fix release blockers"],
   ["event", "1:1 with Maya"],
-  ["tool", "Figma"],
-  ["prompt", "Write a launch email"],
+  ["tool", "Signup flow board"],
+  ["prompt", "Break down milestone ✨"],
 ] as const;
 
 const vars = (v: Record<string, string | number>) => v as CSSProperties;
@@ -82,12 +82,12 @@ export default async function Home() {
       <nav className="home-nav">
         <Link href="/" className="home-brand">
           <Image src="/logo.png" alt="" width={34} height={34} priority />
-          Calnix
+          DTA-Cal
         </Link>
         <div className="home-nav-links">
           {signedIn ? (
             <Link href="/calendar" className="btn btn-primary">
-              <span>Open Calnix</span>
+              <span>Open DTA-Cal</span>
               <ArrowRight size={15} />
             </Link>
           ) : (
@@ -108,25 +108,28 @@ export default async function Home() {
         <div>
           <p className="home-eyebrow">
             <span className="home-eyebrow-dot" aria-hidden="true" />
-            CALENDAR · LIBRARY · TEAM CHAT
+            PROJECTS · CALENDAR · DOCS · WHITEBOARDS
           </p>
           <h1 className="home-title">
-            {["Less", "noise."].map((w, i) => (
+            {["Plan", "it."].map((w, i) => (
               <span key={w} className="word" style={vars({ "--i": i })}>
                 {w}{" "}
               </span>
             ))}
             <br />
-            <span className="word" style={vars({ "--i": 2 })}>
-              More{" "}
-            </span>
-            <span className="word accent" style={vars({ "--i": 3 })}>
-              time.
+            {["Track", "it."].map((w, i) => (
+              <span key={w + i} className="word" style={vars({ "--i": i + 2 })}>
+                {w}{" "}
+              </span>
+            ))}
+            <br />
+            <span className="word accent" style={vars({ "--i": 4 })}>
+              Ship it.
             </span>
           </h1>
           <p className="home-lede">
-            Calnix keeps your team&apos;s calendar, tasks, tools and prompts in one calm place, so you
-            spend less time looking for things and more time doing them.
+            DTA-Cal is your team&apos;s project manager, calendar, docs and whiteboards in one place, with AI
+            that drafts plans and docs only when you ask.
           </p>
           <div className="home-ctas">
             <Link href={primary.href} className="btn btn-primary btn-lg">
@@ -144,7 +147,7 @@ export default async function Home() {
         <div className="home-board-wrap" aria-hidden="true">
           <div className="home-board">
             <div className="home-board-head">
-              <span>This week</span>
+              <span>Course launch</span>
               <span className="home-mono">DESIGN TEAM</span>
             </div>
             <div className="home-week">
@@ -172,7 +175,7 @@ export default async function Home() {
           </div>
           <div className="home-chip home-chip-ai">
             <Sparkles size={14} />
-            Cover image ready
+            Plan drafted · 4 milestones
           </div>
           <div className="home-chip home-chip-team">
             <span className="home-avatars">
@@ -185,7 +188,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="home-features" aria-label="What Calnix does">
+      <section className="home-features" aria-label="What DTA-Cal does">
         {FEATURES.map(({ icon: Icon, tone, title, body }) => (
           <article key={title} className={`home-feature home-reveal tone-${tone}`}>
             <span className="home-feature-icon">
@@ -208,15 +211,15 @@ export default async function Home() {
           </div>
         </div>
         <div className="home-closing-body home-reveal">
-          <h2>Give your team its week back.</h2>
+          <h2>Stop juggling tools. Start shipping.</h2>
           <Link href={primary.href} className="btn btn-lg home-closing-btn">
             <span>{primary.label}</span>
             <ArrowRight size={16} />
           </Link>
         </div>
         <footer className="home-footer">
-          <span>© {new Date().getFullYear()} Calnix</span>
-          <span>Less noise. More time.</span>
+          <span>© {new Date().getFullYear()} DTA-Cal</span>
+          <span>Plan it. Track it. Ship it.</span>
         </footer>
       </section>
     </main>

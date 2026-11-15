@@ -1,10 +1,7 @@
-import { after, NextResponse } from "next/server";
-import { claimGeneration, generateItemAssets } from "@/lib/generate";
+import { NextResponse } from "next/server";
 import { itemInput } from "@/lib/item-input";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { Item } from "@/lib/types";
-
-export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const supabase = await supabaseServer();
@@ -30,8 +27,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const claim = await claimGeneration(item.id);
-  if (claim === "started") after(() => generateItemAssets(item.id));
-
+  // AI never starts on its own: the person asks for a description or cover.
   return NextResponse.json({ item }, { status: 201 });
 }

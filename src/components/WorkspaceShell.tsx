@@ -3,18 +3,25 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   Calendar as CalendarIcon,
   FolderArchive as LibraryIcon,
+  FolderKanban as ProjectsIcon,
+  ListTodo as TasksIcon,
   MessageSquare as ChatIcon,
   Users as TeamIcon,
+  Search,
+  MoreHorizontal,
+  X,
   Sun,
   Moon,
   LogOut,
 } from "lucide-react";
 import { subscribeToTable, supabaseBrowser } from "@/lib/supabase/browser";
-import type { Item, ItemKind, Member, Organization, Team } from "@/lib/types";
+import { useProjects } from "@/lib/use-projects";
+import type { Item, ItemKind, Member, Organization, Project, Team } from "@/lib/types";
+import { CommandPalette } from "./CommandPalette";
 import { ItemDrawer } from "./ItemDrawer";
 import { ItemForm, type ItemDefaults } from "./ItemForm";
 
@@ -27,10 +34,14 @@ interface Workspace {
   isAdmin: boolean;
   /** Teams this person can add items to. */
   writableTeams: Team[];
+  /** Active projects in this organization. */
+  projects: Project[];
+  aiEnabled: boolean;
   memberById: (id: string | null) => Member | undefined;
   newItem: (defaults?: ItemDefaults) => void;
   editItem: (item: Item) => void;
   openItem: (id: string) => void;
+  openSearch: () => void;
   theme: "light" | "dark";
   toggleTheme: () => void;
 }
@@ -45,10 +56,23 @@ export function useWorkspace() {
 
 const NAV = [
   { href: "/calendar", label: "Calendar", icon: CalendarIcon },
-  { href: "/library", label: "Library", icon: LibraryIcon },
+  { href: "/projects", label: "Projects", icon: ProjectsIcon },
+  { href: "/tasks", label: "My tasks", icon: TasksIcon },
   { href: "/chat", label: "Chat", icon: ChatIcon },
-  { href: "/team", label: "Team", icon: TeamIcon },
+  // On phones these move into the "More" sheet so the bottom bar stays readable.
+  { href: "/library", label: "Library", icon: LibraryIcon, secondary: true },
+  { href: "/team", label: "Team", icon: TeamIcon, secondary: true },
 ];
+
+const THEME_KEY = "calnix-theme";
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => observer.disconnect();
+}
+const readTheme = () =>
+  document.documentElement.getAttribute("data-theme") === "dark" ? ("dark" as const) : ("light" as const);
 
 export function WorkspaceShell(props: {
   userId: string;
@@ -61,36 +85,42 @@ export function WorkspaceShell(props: {
   const { userId, org, orgs, teams, members, children } = props;
   const pathname = usePathname();
   const router = useRouter();
+  // The docs studio takes the whole window: no main navigation beside it.
+  const focus = pathname.startsWith("/studio");
   const [form, setForm] = useState<{ item?: Item; defaults?: ItemDefaults; key: number } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  useEffect(() => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") as "light" | "dark" | null;
-    if (currentTheme) {
-      setTheme(currentTheme);
-    } else {
-      const stored = localStorage.getItem("calnix-theme") as "light" | "dark" | null;
-      if (stored) {
-        setTheme(stored);
-        document.documentElement.setAttribute("data-theme", stored);
-      }
-    }
-  }, []);
+  const { projects } = useProjects(org.id);
+  // The theme lives on <html>, set before paint by the script in the root layout.
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "light" as const);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      document.documentElement.setAttribute("data-theme", next);
-      localStorage.setItem("calnix-theme", next);
-      return next;
-    });
+    const next = readTheme() === "light" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", next);
+    try {
+      localStorage.setItem(THEME_KEY, next);
+    } catch {
+      // Private mode: the choice lasts for this page only.
+    }
   }, []);
 
   const newItem = useCallback((defaults?: ItemDefaults) => setForm({ defaults, key: Date.now() }), []);
   const editItem = useCallback((item: Item) => setForm({ item, key: Date.now() }), []);
   const openItem = useCallback((id: string) => setOpenId(id), []);
+  const openSearch = useCallback(() => setSearching(true), []);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearching((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const value = useMemo<Workspace>(() => {
     const byId = new Map(members.map((m) => [m.id, m]));
@@ -104,14 +134,17 @@ export function WorkspaceShell(props: {
       me,
       isAdmin,
       writableTeams: isAdmin ? teams : teams.filter((t) => me.teamIds.includes(t.id)),
+      projects,
+      aiEnabled: org.ai_enabled,
       memberById: (id) => (id ? byId.get(id) : undefined),
       newItem,
       editItem,
       openItem,
+      openSearch,
       theme,
       toggleTheme,
     };
-  }, [userId, org, teams, members, newItem, editItem, openItem, theme, toggleTheme]);
+  }, [userId, org, teams, members, projects, newItem, editItem, openItem, openSearch, theme, toggleTheme]);
 
   useEffect(() => {
     const refresh = async () => {
@@ -140,29 +173,29 @@ export function WorkspaceShell(props: {
 
   return (
     <WorkspaceContext.Provider value={value}>
-      <div className="shell">
+      <div className={`shell${focus ? " shell-focus" : ""}`}>
+        {!focus && (
         <nav className="rail" aria-label="Main">
-          <Link href="/calendar" className="rail-brand" aria-label="Calnix home">
-            <div className="rail-logo-wrapper" title="Calnix — Less noise. More time.">
-              <Image
-                src="/logo.png"
-                alt="Calnix Logo"
-                width={32}
-                height={32}
-                priority
-                className="rail-logo-img"
-              />
+          <Link href="/calendar" className="rail-brand" aria-label="DTA-Cal home">
+            <div className="rail-logo-wrapper">
+              <Image src="/logo.png" alt="" width={30} height={30} priority className="rail-logo-img" />
             </div>
-            <span className="rail-brand-name">Calnix</span>
+            <span className="rail-brand-name">DTA-Cal</span>
           </Link>
+
+          <button type="button" className="rail-search" onClick={openSearch} title="Search (Ctrl K)">
+            <Search size={16} aria-hidden="true" />
+            <span>Search</span>
+            <kbd>Ctrl K</kbd>
+          </button>
 
           <ul>
             {NAV.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
               return (
-                <li key={item.href}>
-                  <Link href={item.href} aria-current={isActive ? "page" : undefined}>
+                <li key={item.href} className={item.secondary ? "rail-secondary" : undefined}>
+                  <Link href={item.href} aria-current={isActive ? "page" : undefined} title={item.label}>
                     <Icon aria-hidden="true" />
                     <span>{item.label}</span>
                     {item.href === "/chat" && unread > 0 && (
@@ -174,6 +207,18 @@ export function WorkspaceShell(props: {
                 </li>
               );
             })}
+            <li className="rail-more-item">
+              <button
+                type="button"
+                className="rail-more"
+                aria-expanded={moreOpen}
+                aria-current={NAV.some((n) => n.secondary && pathname.startsWith(n.href)) ? "page" : undefined}
+                onClick={() => setMoreOpen(!moreOpen)}
+              >
+                <MoreHorizontal aria-hidden="true" />
+                <span>More</span>
+              </button>
+            </li>
           </ul>
 
           <div className="rail-foot">
@@ -188,11 +233,7 @@ export function WorkspaceShell(props: {
             </button>
 
             {orgs.length > 1 ? (
-              <select
-                aria-label="Organization"
-                value={org.id}
-                onChange={(e) => switchOrg(e.target.value)}
-              >
+              <select aria-label="Organization" value={org.id} onChange={(e) => switchOrg(e.target.value)}>
                 {orgs.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.name}
@@ -205,19 +246,68 @@ export function WorkspaceShell(props: {
               </p>
             )}
 
-            <button
-              className="rail-signout"
-              onClick={signOut}
-              title="Sign out of Calnix"
-              aria-label="Sign out"
-            >
+            <button className="rail-signout" onClick={signOut} aria-label="Sign out">
               <LogOut size={14} />
               <span>Sign out</span>
             </button>
           </div>
         </nav>
+        )}
         <div className="workspace">{children}</div>
       </div>
+
+      {moreOpen && !focus && (
+        <>
+          <div className="sheet-backdrop" onClick={() => setMoreOpen(false)} aria-hidden="true" />
+          <div className="more-sheet" role="dialog" aria-label="More">
+            <div className="more-sheet-head">
+              <strong>{org.name}</strong>
+              <button className="btn-plain" onClick={() => setMoreOpen(false)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <button
+              className="more-row"
+              onClick={() => {
+                setMoreOpen(false);
+                openSearch();
+              }}
+            >
+              <Search size={18} aria-hidden="true" />
+              Search
+            </button>
+            {NAV.filter((n) => n.secondary).map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link key={item.href} href={item.href} className="more-row" onClick={() => setMoreOpen(false)}>
+                  <Icon size={18} aria-hidden="true" />
+                  {item.label}
+                </Link>
+              );
+            })}
+            <button className="more-row" onClick={toggleTheme}>
+              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+              {theme === "light" ? "Dark mode" : "Light mode"}
+            </button>
+            {orgs.length > 1 && (
+              <label className="more-row">
+                Organization
+                <select value={org.id} onChange={(e) => switchOrg(e.target.value)}>
+                  {orgs.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button className="more-row danger" onClick={signOut}>
+              <LogOut size={18} aria-hidden="true" />
+              Sign out
+            </button>
+          </div>
+        </>
+      )}
 
       {form && (
         <ItemForm
@@ -232,6 +322,7 @@ export function WorkspaceShell(props: {
         />
       )}
       {openId && <ItemDrawer key={openId} id={openId} onClose={() => setOpenId(null)} />}
+      {searching && <CommandPalette onClose={() => setSearching(false)} />}
     </WorkspaceContext.Provider>
   );
 }

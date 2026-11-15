@@ -1,7 +1,7 @@
 import { AuthForm } from "@/components/AuthForm";
 import { authErrorMessage } from "@/lib/auth-errors";
 
-export const metadata = { title: "Create your Calnix account" };
+export const metadata = { title: "Create your DTA-Cal account" };
 
 export default async function SignupPage({
   searchParams,

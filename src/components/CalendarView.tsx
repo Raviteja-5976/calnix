@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus, SlidersHorizontal, X } from "lucide-react";
 import { itemsOnDay, layoutWeek } from "@/lib/calendar-layout";
 import {
   addDays,
@@ -19,7 +20,7 @@ import {
 } from "@/lib/dates";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { announceItemsChanged, useItems } from "@/lib/use-items";
-import type { Item } from "@/lib/types";
+import type { Item, Milestone } from "@/lib/types";
 import { ItemCover } from "./ItemCover";
 import { Avatar, useWorkspace } from "./WorkspaceShell";
 
@@ -27,7 +28,7 @@ type View = "month" | "week";
 type ScopeFilter = "all" | "team" | "personal";
 
 export function CalendarView() {
-  const { org, teams, members, newItem } = useWorkspace();
+  const { org, teams, members, newItem, projects } = useWorkspace();
   const now = today();
   const [view, setView] = useState<View>("month");
   const [anchor, setAnchor] = useState(now);
@@ -35,6 +36,21 @@ export function CalendarView() {
   const [scope, setScope] = useState<ScopeFilter>("all");
   const [teamId, setTeamId] = useState("all");
   const [personId, setPersonId] = useState("all");
+  const [projectId, setProjectId] = useState("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  // The month grid fits the screen; the number of bars per week follows its real height.
+  const grid = useRef<HTMLDivElement>(null);
+  const [gridHeight, setGridHeight] = useState(0);
+
+  useEffect(() => {
+    const el = grid.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => setGridHeight(entry.contentRect.height));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
 
   const weeks = useMemo(
     () => (view === "month" ? monthWeeks(anchor) : [startOfWeek(anchor)]),
@@ -45,16 +61,50 @@ export function CalendarView() {
 
   const { items, loading, error } = useItems({ orgId: org.id, from, to });
 
+  // Milestone due dates in view, shown as diamonds on their day.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabaseBrowser()
+        .from("milestones")
+        .select("*")
+        .eq("org_id", org.id)
+        .gte("due_date", from)
+        .lte("due_date", to);
+      if (!cancelled) setMilestones((data ?? []) as Milestone[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [org.id, from, to]);
+
+  const visibleMilestones = useMemo(
+    () =>
+      milestones.filter(
+        (m) => (projectId === "all" || m.project_id === projectId) && (teamId === "all" || m.team_id === teamId),
+      ),
+    [milestones, projectId, teamId],
+  );
+
   const visible = useMemo(
     () =>
       items.filter(
         (i) =>
           (scope === "all" || i.scope === scope) &&
           (teamId === "all" || i.team_id === teamId) &&
-          (personId === "all" || i.owner_id === personId || i.assignee_id === personId)
+          (personId === "all" || i.owner_id === personId || i.assignee_id === personId) &&
+          (projectId === "all" || (projectId === "none" ? !i.project_id : i.project_id === projectId))
       ),
-    [items, scope, teamId, personId]
+    [items, scope, teamId, personId, projectId]
   );
+
+  const activeFilters =
+    Number(scope !== "all") + Number(teamId !== "all") + Number(personId !== "all") + Number(projectId !== "all");
+
+  function selectDay(day: string) {
+    setSelected(day);
+    setPanelOpen(true);
+  }
 
   function move(direction: 1 | -1) {
     const next = view === "month" ? addMonths(anchor, direction) : addDays(anchor, direction * 7);
@@ -73,7 +123,7 @@ export function CalendarView() {
       : `${monthName(startOfWeek(anchor))} / ${monthName(addDays(startOfWeek(anchor), 6))}`;
 
   return (
-    <div className="calendar-page">
+    <div className={`calendar-page${panelOpen ? "" : " panel-closed"}`}>
       <main className="calendar-main">
         <header className="cal-head">
           <h1 className="month-title">
@@ -123,6 +173,16 @@ export function CalendarView() {
             </div>
 
             <button
+              className="btn"
+              aria-pressed={showFilters || activeFilters > 0}
+              aria-expanded={showFilters}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal size={15} />
+              <span>Filters{activeFilters ? ` · ${activeFilters}` : ""}</span>
+            </button>
+
+            <button
               className="btn btn-primary"
               onClick={() => newItem({ start_date: selected })}
               aria-label="Add new item"
@@ -133,6 +193,7 @@ export function CalendarView() {
           </div>
         </header>
 
+        {showFilters && (
         <div className="cal-filters">
           <div className="btn-group" role="group" aria-label="Show">
             {(["all", "team", "personal"] as const).map((s) => (
@@ -175,8 +236,34 @@ export function CalendarView() {
             ))}
           </select>
 
+          {projects.length > 0 && (
+            <select aria-label="Filter by project" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="all">All projects</option>
+              <option value="none">Not in a project</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {activeFilters > 0 && (
+            <button
+              className="btn btn-small btn-plain"
+              onClick={() => {
+                setScope("all");
+                setTeamId("all");
+                setPersonId("all");
+                setProjectId("all");
+              }}
+            >
+              Clear filters
+            </button>
+          )}
           <Legend />
         </div>
+        )}
 
         {error && (
           <p className="error" role="alert">
@@ -184,7 +271,7 @@ export function CalendarView() {
           </p>
         )}
 
-        <div className={`cal cal-${view}`} aria-busy={loading}>
+        <div ref={grid} className={`cal cal-${view}`} aria-busy={loading}>
           <div className="cal-weekdays" aria-hidden="true">
             {[0, 1, 2, 3, 4, 5, 6].map((d) => (
               <span key={d}>{weekdayShort(addDays(weeks[0], d))}</span>
@@ -195,19 +282,35 @@ export function CalendarView() {
               key={week}
               week={week}
               items={visible}
-              maxLanes={view === "month" ? 4 : 12}
+              maxLanes={view === "month" ? monthLanes(gridHeight, weeks.length) : 12}
               month={view === "month" ? anchor.slice(0, 7) : null}
               selected={selected}
               now={now}
-              onSelect={setSelected}
+              onSelect={selectDay}
+              milestones={visibleMilestones}
             />
           ))}
         </div>
       </main>
 
-      <DayPanel day={selected} items={itemsOnDay(visible, selected)} />
+      {panelOpen && <div className="day-panel-backdrop" onClick={() => setPanelOpen(false)} aria-hidden="true" />}
+      {panelOpen && (
+      <DayPanel
+        onClose={() => setPanelOpen(false)}
+        day={selected}
+        items={itemsOnDay(visible, selected)}
+        milestones={visibleMilestones.filter((m) => m.due_date === selected)}
+      />
+      )}
     </div>
   );
+}
+
+/** Bars that fit in one week row: day number on top, then 26px per bar. */
+function monthLanes(gridHeight: number, weeks: number) {
+  if (!gridHeight) return 3;
+  const perWeek = (gridHeight - 34) / weeks;
+  return Math.max(1, Math.min(5, Math.floor((perWeek - 36) / 26)));
 }
 
 function Legend() {
@@ -228,6 +331,9 @@ function Legend() {
       <li>
         <i className="swatch band-task band-hatch" /> Stripes mean personal
       </li>
+      <li>
+        <i className="diamond" /> Milestone
+      </li>
     </ul>
   );
 }
@@ -240,6 +346,7 @@ function Week({
   selected,
   now,
   onSelect,
+  milestones,
 }: {
   week: string;
   items: Item[];
@@ -248,6 +355,7 @@ function Week({
   selected: string;
   now: string;
   onSelect: (day: string) => void;
+  milestones: Milestone[];
 }) {
   const { openItem } = useWorkspace();
   const { bars, hidden } = useMemo(
@@ -256,6 +364,12 @@ function Week({
   );
   const lanes = bars.reduce((most, b) => Math.max(most, b.lane + 1), 0);
   const days = [0, 1, 2, 3, 4, 5, 6].map((d) => addDays(week, d));
+  const dotsByDay = useMemo(
+    () => days.map((day) => itemsOnDay(items, day).map((item) => item.kind)),
+    // days is derived from week.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, week],
+  );
 
   return (
     <div
@@ -279,7 +393,22 @@ function Week({
             aria-pressed={day === selected}
           >
             <span className="day-num">{Number(day.slice(8))}</span>
+            {milestones.some((m) => m.due_date === day) && (
+              <span
+                className="diamond day-milestone"
+                title={milestones
+                  .filter((m) => m.due_date === day)
+                  .map((m) => `Milestone: ${m.title}`)
+                  .join(", ")}
+              />
+            )}
             {hidden[i] > 0 && <span className="day-more">+{hidden[i]}</span>}
+            <span className="day-dots" aria-hidden="true">
+              {dotsByDay[i].slice(0, 3).map((kind, n) => (
+                <i key={n} className={`dot dot-${kind}`} />
+              ))}
+              {dotsByDay[i].length > 3 && <b>+</b>}
+            </span>
           </button>
         ))}
       </div>
@@ -309,8 +438,18 @@ function Week({
   );
 }
 
-function DayPanel({ day, items }: { day: string; items: Item[] }) {
-  const { newItem } = useWorkspace();
+function DayPanel({
+  day,
+  items,
+  milestones,
+  onClose,
+}: {
+  day: string;
+  items: Item[];
+  milestones: Milestone[];
+  onClose: () => void;
+}) {
+  const { newItem, projects } = useWorkspace();
   const events = items.filter((i) => i.kind === "event");
   const multiDay = items.filter((i) => i.kind === "task" && i.start_date !== i.end_date);
   const tasks = items.filter((i) => i.kind === "task" && i.start_date === i.end_date);
@@ -318,8 +457,27 @@ function DayPanel({ day, items }: { day: string; items: Item[] }) {
 
   return (
     <aside className="day-panel" aria-label={`Agenda for ${longDate(day)}`}>
-      <h2>{longDate(day)}</h2>
-      {!items.length && (
+      <div className="day-panel-head">
+        <h2>{longDate(day)}</h2>
+        <button className="btn-plain" onClick={onClose} aria-label="Close day details">
+          <X size={18} />
+        </button>
+      </div>
+      {milestones.length > 0 && (
+        <section className="day-section">
+          <h3>Milestones</h3>
+          <ul className="task-mini-list">
+            {milestones.map((m) => (
+              <li key={m.id}>
+                <i className={`diamond${m.status === "done" ? " is-done" : ""}`} aria-hidden="true" />
+                <Link href={`/projects/${m.project_id}`}>{m.title}</Link>
+                <span className="muted small">{projects.find((p) => p.id === m.project_id)?.name}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {!items.length && !milestones.length && (
         <div className="day-empty">
           <p className="muted">Nothing scheduled for this day yet.</p>
           <button className="btn btn-small" onClick={() => newItem({ start_date: day })}>
@@ -406,7 +564,7 @@ function Row({ item, day }: { item: Item; day: string }) {
         <span className="agenda-text">
           <strong>{item.title}</strong>
           {position && <small>{position}</small>}
-          {item.ai_description && <small className="clamp">{item.ai_description}</small>}
+          {item.summary && <small className="clamp">{item.summary}</small>}
           {item.scope === "personal" && <small className="personal-note">Personal</small>}
           {failed && (
             <small className="error" role="alert">

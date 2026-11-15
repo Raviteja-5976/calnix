@@ -21,7 +21,7 @@ export function LibraryView() {
       (i) =>
         (kind === "all" || i.kind === kind) &&
         (!needle ||
-          [i.title, i.details, i.ai_description, i.prompt_body, i.url].some((text) =>
+          [i.title, i.details, i.summary, i.prompt_body, i.url].some((text) =>
             text?.toLowerCase().includes(needle)
           ))
     );
@@ -104,7 +104,7 @@ export function LibraryView() {
               </div>
               <strong>{item.title}</strong>
               <span className="muted clamp-3">
-                {item.ai_description ??
+                {item.summary ??
                   (item.ai_status === "pending"
                     ? "Creating the description and artwork..."
                     : item.details ?? "")}

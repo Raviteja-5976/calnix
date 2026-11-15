@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./brutal.css";
+import "./responsive.css";
 
 const display = Space_Grotesk({
   subsets: ["latin"],
@@ -21,8 +23,8 @@ const mono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Calnix — Less noise. More time.",
-  description: "Editorial productivity calendar, tasks, tools, and prompts with team chat.",
+  title: "DTA-Cal — Plan it. Track it. Ship it.",
+  description: "Team calendar, project manager, docs and whiteboards with AI you control.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function() {
                 try {
                   const stored = localStorage.getItem('calnix-theme');
-                  const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  const theme = stored === 'dark' ? 'dark' : 'light';
                   document.documentElement.setAttribute('data-theme', theme);
                 } catch (e) {}
               })();

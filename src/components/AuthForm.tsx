@@ -101,88 +101,35 @@ export function AuthForm({
     <main className="auth">
       <div className="auth-bands" aria-hidden="true">
         <div className="auth-brand-statement">
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 10,
-                background: "#252822",
-                border: "1px solid #383B33",
-                display: "grid",
-                placeItems: "center",
-                boxShadow: "2px 2px 0px rgba(0,0,0,0.3)",
-              }}
-            >
-              <Image
-                src="/logo.png"
-                alt="Calnix Logo"
-                width={36}
-                height={36}
-                priority
-              />
-            </div>
-            <div>
-              <h2 style={{ margin: 0, lineHeight: 1 }}>Calnix</h2>
-              <span
-                style={{
-                  fontFamily: "var(--font-data)",
-                  fontSize: 12,
-                  color: "var(--citron)",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                PRODUCTIVITY SUITE
-              </span>
-            </div>
+          <div className="auth-brand-mark">
+            <span className="auth-brand-logo">
+              <Image src="/logo.png" alt="" width={38} height={38} priority />
+            </span>
+            <span>
+              <span className="auth-brand-name">DTA-Cal</span>
+              <br />
+              <span className="auth-brand-tag">PLAN · TRACK · SHIP</span>
+            </span>
           </div>
-          <h2>Less noise. More time.</h2>
-          <p>
-            Editorial Minimalism × Soft Brutalism × Swiss Grid. Designed for focused teams who value clarity over clutter.
-          </p>
+          <h2>Plan it. Track it. Ship it.</h2>
+          <p>Projects, milestones, tasks, docs and whiteboards for your team, with AI that only works when you ask.</p>
         </div>
 
-        <span className="band band-task" style={{ width: "76%" }}>
-          <span style={{ padding: "0 12px", lineHeight: "50px", fontSize: 13, fontWeight: 600 }}>
-            Sprint Planning · Q4 Roadmap
+        {[
+          { kind: "task", text: "Milestone · Course beta launch", width: "78%", left: "0%" },
+          { kind: "event", text: "Sprint review · Thursday 3pm", width: "56%", left: "18%" },
+          { kind: "tool", text: "API spec doc · 12 backlinks", width: "64%", left: "30%" },
+          { kind: "prompt", text: "Whiteboard · Signup flow", width: "44%", left: "8%" },
+          { kind: "task", text: "Ship v2.0 to production", width: "66%", left: "24%" },
+        ].map((b, i) => (
+          <span key={i} className={`band band-${b.kind}`} style={{ width: b.width, marginLeft: b.left }}>
+            <span>{b.text}</span>
           </span>
-        </span>
-        <span
-          className="band band-event band-hatch"
-          style={{ width: "52%", marginLeft: "20%" }}
-        >
-          <span style={{ padding: "0 12px", lineHeight: "50px", fontSize: 13, fontWeight: 600 }}>
-            Personal Focus · Design System Audit
-          </span>
-        </span>
-        <span
-          className="band band-tool"
-          style={{ width: "62%", marginLeft: "34%" }}
-        >
-          <span style={{ padding: "0 12px", lineHeight: "50px", fontSize: 13, fontWeight: 600 }}>
-            Engineering Prompt Engine & Guidelines
-          </span>
-        </span>
-        <span
-          className="band band-prompt band-hatch"
-          style={{ width: "36%", marginLeft: "10%" }}
-        >
-          <span style={{ padding: "0 12px", lineHeight: "50px", fontSize: 13, fontWeight: 600 }}>
-            Review Architecture
-          </span>
-        </span>
-        <span
-          className="band band-task band-hatch"
-          style={{ width: "68%", marginLeft: "26%" }}
-        >
-          <span style={{ padding: "0 12px", lineHeight: "50px", fontSize: 13, fontWeight: 600 }}>
-            Release v2.0 Production Deployment
-          </span>
-        </span>
+        ))}
       </div>
 
       <section className="auth-panel">
-        <Link href="/" className="auth-logo-badge" aria-label="Calnix home">
+        <Link href="/" className="auth-logo-badge" aria-label="DTA-Cal home">
           <Image
             src="/logo.png"
             alt=""
@@ -190,7 +137,7 @@ export function AuthForm({
             height={40}
             className="auth-logo-img"
           />
-          <h1 className="wordmark">Calnix</h1>
+          <h1 className="wordmark">DTA-Cal</h1>
         </Link>
 
         <p className="auth-lede">
@@ -252,12 +199,17 @@ export function AuthForm({
                 placeholder="Minimum 8 characters"
               />
             </label>
+            {!signup && (
+              <Link href="/forgot-password" className="auth-forgot">
+                Forgot your password?
+              </Link>
+            )}
             {error && (
               <p className="error" role="alert">
                 {error}
               </p>
             )}
-            <button className="btn btn-primary" disabled={busy} style={{ minHeight: 42, fontSize: 15 }}>
+            <button className="btn btn-primary" disabled={busy} style={{ minHeight: 44, fontSize: 15 }}>
               <span>{signup ? "Create account" : "Sign in"}</span>
               <ArrowRight size={16} />
             </button>
@@ -266,7 +218,7 @@ export function AuthForm({
         )}
 
         <p className="auth-switch">
-          {signup ? "Already have an account? " : "New to Calnix? "}
+          {signup ? "Already have an account? " : "New to DTA-Cal? "}
           <Link href={signup ? "/login" : "/signup"}>
             {signup ? "Sign in" : "Create an account"}
           </Link>

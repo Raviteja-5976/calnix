@@ -1,62 +1,68 @@
 /* ==========================================================================
-   Calnix Design System
-   Philosophy: Quietly distinctive.
-   Brand statement: Less noise. More time.
-   Design language: Editorial Minimalism × Soft Brutalism × Swiss Grid.
+   DTA-Cal Design System
+   Playful brutalism, after DevTrack Academy: cream paper, deep navy ink,
+   electric orange, thick borders and hard offset shadows.
    ========================================================================== */
 
 :root {
-  /* 3.1 Primary Colors */
-  --paper: #F4F1E9;
-  --surface: #FFFEFA;
+  /* Brand: DevTrack Academy palette, used as bright solid fills */
+  --paper: #FFF8F0;
+  --surface: #FFFFFF;
   --surface-elevated: #FFFFFF;
-  --carbon: #20221F;
-  --carbon-deep: #171915;
-  --citron: #A9C957;
-  --stone: #DCD9CF;
-  --stone-muted: #BEBBAF;
-  --ash: #77796F;
+  --carbon: #1B1F3B;
+  --carbon-deep: #10132A;
+  --citron: #FF6B35;
+  --stone: #E6DCCB;
+  --stone-muted: #1B1F3B;
+  --ash: #3E4468;
 
-  /* 3.2 Supporting Colors */
-  --citron-pale: #EAF1D8;
-  --citron-dark: #758F3B;
+  --citron-pale: #FFE2D3;
+  --citron-dark: #E2531C;
 
-  /* 3.3 Functional Colors */
-  --sage: #8BAA8B;
-  --mustard: #C7A653;
-  --terracotta: #C97968;
-  --dusty-blue: #829DB8;
+  --mint: #6EE7B7;
+  --sky: #4EA8FF;
+  --coral: #FF5C7A;
+  --yellow: #FFD54F;
+  --orange: #FF6B35;
+  --on-bright: #1B1F3B;
 
-  /* 3.4 Calendar Semantic Colors */
-  --cal-personal-bg: #F4E3DC;
-  --cal-personal-fg: #704538;
-  --cal-work-bg: #E5EDE2;
-  --cal-work-fg: #38533B;
-  --cal-meetings-bg: #E3EAF0;
-  --cal-meetings-fg: #3D536B;
-  --cal-reminders-bg: #ECE8F3;
-  --cal-reminders-fg: #584C75;
-  --cal-important-bg: #F1EBD9;
-  --cal-important-fg: #69572E;
+  --sage: var(--mint);
+  --mustard: var(--yellow);
+  --terracotta: var(--coral);
+  --dusty-blue: var(--sky);
 
-  /* Semantic item kinds */
-  --band-task: #38533B;
-  --band-task-bg: #E5EDE2;
-  --band-event: #3D536B;
-  --band-event-bg: #E3EAF0;
-  --band-tool: #758F3B;
-  --band-tool-bg: #EAF1D8;
-  --band-prompt: #584C75;
-  --band-prompt-bg: #ECE8F3;
+  /* Calendar and item kinds: bright fills, navy text */
+  --cal-personal-bg: #FF8FA3;
+  --cal-personal-fg: #1B1F3B;
+  --cal-work-bg: #6EE7B7;
+  --cal-work-fg: #1B1F3B;
+  --cal-meetings-bg: #7CC0FF;
+  --cal-meetings-fg: #1B1F3B;
+  --cal-reminders-bg: #FF9466;
+  --cal-reminders-fg: #1B1F3B;
+  --cal-important-bg: #FFD54F;
+  --cal-important-fg: #1B1F3B;
 
-  /* UI Tokens */
+  --band-task: #1B1F3B;
+  --band-task-bg: #6EE7B7;
+  --band-event: #1B1F3B;
+  --band-event-bg: #7CC0FF;
+  --band-tool: #1B1F3B;
+  --band-tool-bg: #FF9466;
+  --band-prompt: #1B1F3B;
+  --band-prompt-bg: #FFD54F;
+
+  /* UI tokens */
   --line: var(--stone);
-  --line-strong: var(--stone-muted);
+  --line-strong: #1B1F3B;
   --ink: var(--carbon);
   --ink-soft: var(--ash);
   --muted: var(--ash);
   --today: var(--citron);
-  --danger: var(--terracotta);
+  --danger: #D9243F;
+  --border-w: 2px;
+  --border-w-heavy: 3px;
+  --grid-line: rgba(27, 31, 59, 0.06);
 
   /* Typography */
   --font-sans: var(--font-body), Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -74,87 +80,79 @@
   --space-3xl: 48px;
   --space-4xl: 64px;
 
-  /* Border Radius */
-  --radius-sm: 4px;
-  --radius-control: 6px;
-  --radius-card: 8px;
-  --radius-panel: 12px;
-  --radius-dialog: 16px;
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-control: 10px;
+  --radius-card: 14px;
+  --radius-panel: 16px;
+  --radius-dialog: 20px;
   --radius-full: 9999px;
 
-  /* Soft Brutalism Shadows */
-  --shadow-subtle: 0 1px 2px rgba(32, 34, 31, 0.04);
-  --shadow-card: 0 1px 3px rgba(32, 34, 31, 0.05);
-  --shadow-brutal: 2px 2px 0px var(--stone);
-  --shadow-brutal-hover: 3px 3px 0px var(--stone-muted);
-  --shadow-dialog: 0 18px 40px -10px rgba(32, 34, 31, 0.16), 0 4px 12px rgba(32, 34, 31, 0.06);
+  /* Hard offset shadows */
+  --shadow-subtle: 2px 2px 0 var(--line-strong);
+  --shadow-card: 4px 4px 0 var(--line-strong);
+  --shadow-brutal: 3px 3px 0 var(--line-strong);
+  --shadow-brutal-hover: 5px 5px 0 var(--line-strong);
+  --shadow-dialog: 8px 8px 0 var(--line-strong);
 
-  /* Rail styling */
-  --rail-bg: #1A1C19;
-  --rail-border: #2D302A;
-  --rail-text: #E5E2D9;
-  --rail-hover: rgba(255, 254, 250, 0.08);
+  /* Navigation rail */
+  --rail-bg: #1B1F3B;
+  --rail-border: #2C3156;
+  --rail-text: #FFFFFF;
+  --rail-hover: rgba(255, 255, 255, 0.12);
 
   color-scheme: light;
 }
 
-/* 4. Dark Mode */
+/* Dark: neutral greys, light lines and shadows, the same bright fills, white text. */
 [data-theme="dark"] {
-  --paper: #20221F;
-  --surface: #292B27;
-  --surface-elevated: #32342F;
-  --carbon: #F4F1E9;
+  --paper: #1C1C1F;
+  --surface: #26262A;
+  --surface-elevated: #2F2F34;
+  --carbon: #F7F7F8;
   --carbon-deep: #FFFFFF;
-  --citron: #B7D76B;
-  --stone: #44463F;
-  --stone-muted: #565850;
-  --ash: #AAA99E;
+  --citron: #FF7A45;
+  --stone: #3A3A40;
+  --stone-muted: #E4E4E7;
+  --ash: #C9C9D1;
 
-  --citron-pale: #2C3520;
-  --citron-dark: #8CA949;
+  --citron-pale: #3B2D27;
+  --citron-dark: #FF9A6B;
 
-  --sage: #9DBF9D;
-  --mustard: #DEC06C;
-  --terracotta: #DE8877;
-  --dusty-blue: #94AFC8;
+  --on-bright: #1B1F3B;
 
-  --cal-personal-bg: #402E29;
-  --cal-personal-fg: #F4D0C5;
-  --cal-work-bg: #273729;
-  --cal-work-fg: #C9E5C6;
-  --cal-meetings-bg: #263544;
-  --cal-meetings-fg: #C8DBEE;
-  --cal-reminders-bg: #372E46;
-  --cal-reminders-fg: #E1D4F4;
-  --cal-important-bg: #423824;
-  --cal-important-fg: #F4E4BA;
+  --cal-personal-bg: #FF8FA3;
+  --cal-personal-fg: #1B1F3B;
+  --cal-work-bg: #6EE7B7;
+  --cal-work-fg: #1B1F3B;
+  --cal-meetings-bg: #7CC0FF;
+  --cal-meetings-fg: #1B1F3B;
+  --cal-reminders-bg: #FF9466;
+  --cal-reminders-fg: #1B1F3B;
+  --cal-important-bg: #FFD54F;
+  --cal-important-fg: #1B1F3B;
 
-  --band-task: #8BAA8B;
-  --band-task-bg: #253327;
-  --band-event: #829DB8;
-  --band-event-bg: #212F3D;
-  --band-tool: #B7D76B;
-  --band-tool-bg: #28331E;
-  --band-prompt: #B19FD1;
-  --band-prompt-bg: #30263E;
+  --band-task: #1B1F3B;
+  --band-task-bg: #6EE7B7;
+  --band-event: #1B1F3B;
+  --band-event-bg: #7CC0FF;
+  --band-tool: #1B1F3B;
+  --band-tool-bg: #FF9466;
+  --band-prompt: #1B1F3B;
+  --band-prompt-bg: #FFD54F;
 
   --line: var(--stone);
-  --line-strong: var(--stone-muted);
+  --line-strong: #D4D4D8;
   --ink: var(--carbon);
   --ink-soft: var(--ash);
   --muted: var(--ash);
   --today: var(--citron);
-  --danger: var(--terracotta);
+  --danger: #FF7A93;
+  --grid-line: rgba(255, 255, 255, 0.04);
 
-  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-card: 0 2px 6px rgba(0, 0, 0, 0.3);
-  --shadow-brutal: 2px 2px 0px var(--stone);
-  --shadow-brutal-hover: 3px 3px 0px var(--stone-muted);
-  --shadow-dialog: 0 20px 48px -12px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4);
-
-  --rail-bg: #171915;
-  --rail-border: #32342F;
-  --rail-text: #F4F1E9;
+  --rail-bg: #141416;
+  --rail-border: #2E2E33;
+  --rail-text: #F7F7F8;
   --rail-hover: rgba(255, 255, 255, 0.08);
 
   color-scheme: dark;
@@ -310,7 +308,7 @@ button:disabled {
 .btn-brand {
   background: var(--citron);
   border-color: var(--citron-dark);
-  color: #171915;
+  color: #14172E;
   font-weight: 600;
   box-shadow: 2px 2px 0px var(--citron-dark);
 }
@@ -361,7 +359,7 @@ button:disabled {
 }
 
 .btn-plain:hover {
-  background: rgba(32, 34, 31, 0.05);
+  background: rgba(27, 31, 59, 0.05);
   color: var(--carbon);
 }
 
@@ -386,7 +384,7 @@ button:disabled {
 }
 
 .btn-group .btn:hover:not(:disabled) {
-  background: rgba(32, 34, 31, 0.06);
+  background: rgba(27, 31, 59, 0.06);
   transform: none;
   box-shadow: none;
 }
@@ -425,7 +423,7 @@ input:not([type="checkbox"], [type="radio"]), select, textarea {
   font-size: 14.5px;
   font-weight: 400;
   color: var(--carbon);
-  box-shadow: inset 0 1px 2px rgba(32, 34, 31, 0.02);
+  box-shadow: inset 0 1px 2px rgba(27, 31, 59, 0.02);
   transition: border-color 120ms ease-out, box-shadow 120ms ease-out;
 }
 
@@ -515,8 +513,8 @@ input[type="checkbox"]:checked::before {
   content: "";
   width: 9px;
   height: 5px;
-  border-left: 2px solid #171915;
-  border-bottom: 2px solid #171915;
+  border-left: 2px solid #14172E;
+  border-bottom: 2px solid #14172E;
   transform: rotate(-45deg) translate(1px, -1px);
 }
 
@@ -526,25 +524,25 @@ input[type="checkbox"]:checked::before {
 .band-task {
   --band-bg: var(--cal-work-bg);
   --band-fg: var(--cal-work-fg);
-  --band-border: #9DC398;
+  --band-border: #1B1F3B;
 }
 
 .band-event {
   --band-bg: var(--cal-meetings-bg);
   --band-fg: var(--cal-meetings-fg);
-  --band-border: #9CB8D4;
+  --band-border: #1B1F3B;
 }
 
 .band-tool {
   --band-bg: var(--cal-reminders-bg);
   --band-fg: var(--cal-reminders-fg);
-  --band-border: #B7A8CF;
+  --band-border: #1B1F3B;
 }
 
 .band-prompt {
   --band-bg: var(--cal-important-bg);
   --band-fg: var(--cal-important-fg);
-  --band-border: #D1B87F;
+  --band-border: #1B1F3B;
 }
 
 .band {
@@ -675,8 +673,8 @@ input[type="checkbox"]:checked::before {
   border-radius: var(--radius-card);
   display: grid;
   place-items: center;
-  background: #252822;
-  border: 1px solid #383B33;
+  background: #23284A;
+  border: 1px solid #3A3F66;
   overflow: hidden;
   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.4);
   transition: transform 120ms ease-out, border-color 120ms ease-out;
@@ -716,7 +714,7 @@ input[type="checkbox"]:checked::before {
   gap: 4px;
   padding: 10px 4px;
   border-radius: var(--radius-control);
-  color: #AAA79C;
+  color: #B9BCD6;
   font-size: 11.5px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -730,14 +728,14 @@ input[type="checkbox"]:checked::before {
 
 .rail li a[aria-current="page"] {
   background: var(--surface);
-  color: #171915;
+  color: #14172E;
   font-weight: 600;
   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="dark"] .rail li a[aria-current="page"] {
   background: var(--citron);
-  color: #171915;
+  color: #14172E;
 }
 
 .rail svg {
@@ -792,8 +790,8 @@ input[type="checkbox"]:checked::before {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-control);
-  background: #252822;
-  border: 1px solid #383B33;
+  background: #23284A;
+  border: 1px solid #3A3F66;
   color: #C2BFB4;
   transition: all 120ms ease-out;
 }
@@ -806,7 +804,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .rail-org {
-  color: #AAA79C;
+  color: #B9BCD6;
   font-size: 11px;
   text-align: center;
   padding: 0 4px;
@@ -821,9 +819,9 @@ input[type="checkbox"]:checked::before {
   min-height: 28px;
   padding: 2px 4px;
   font-size: 11px;
-  background: #252822;
-  border: 1px solid #383B33;
-  color: #E5E2D9;
+  background: #23284A;
+  border: 1px solid #3A3F66;
+  color: #FFF8F0;
   border-radius: var(--radius-sm);
   width: 100%;
 }
@@ -855,7 +853,7 @@ input[type="checkbox"]:checked::before {
   font-weight: 650;
   line-height: 1;
   border: 1.5px solid var(--surface);
-  box-shadow: 0 1px 2px rgba(32, 34, 31, 0.1);
+  box-shadow: 0 1px 2px rgba(27, 31, 59, 0.1);
 }
 
 /* ==========================================================================
@@ -1025,7 +1023,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .day:hover {
-  background: rgba(169, 201, 87, 0.09);
+  background: rgba(255, 107, 53, 0.09);
 }
 
 .day:focus-visible {
@@ -1034,7 +1032,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .day[data-outside="true"] {
-  background: rgba(32, 34, 31, 0.02);
+  background: rgba(27, 31, 59, 0.02);
 }
 
 [data-theme="dark"] .day[data-outside="true"] {
@@ -1047,7 +1045,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .day[data-selected="true"] {
-  background: rgba(169, 201, 87, 0.16);
+  background: rgba(255, 107, 53, 0.16);
 }
 
 .day-num {
@@ -1066,7 +1064,7 @@ input[type="checkbox"]:checked::before {
 
 .day[data-today="true"] .day-num {
   background: var(--citron);
-  color: #171915;
+  color: #14172E;
   font-weight: 700;
   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.15);
 }
@@ -1116,7 +1114,7 @@ input[type="checkbox"]:checked::before {
   height: 100dvh;
   position: sticky;
   top: 0;
-  box-shadow: -2px 0px 8px rgba(32, 34, 31, 0.02);
+  box-shadow: -2px 0px 8px rgba(27, 31, 59, 0.02);
 }
 
 .day-panel > h2 {
@@ -1396,25 +1394,25 @@ dialog::backdrop {
 .seg-task {
   --seg-bg: var(--cal-work-bg);
   --seg-fg: var(--cal-work-fg);
-  --seg-border: #8BAA8B;
+  --seg-border: #1B1F3B;
 }
 
 .seg-event {
   --seg-bg: var(--cal-meetings-bg);
   --seg-fg: var(--cal-meetings-fg);
-  --seg-border: #829DB8;
+  --seg-border: #1B1F3B;
 }
 
 .seg-tool {
   --seg-bg: var(--cal-reminders-bg);
   --seg-fg: var(--cal-reminders-fg);
-  --seg-border: #A99BC4;
+  --seg-border: #1B1F3B;
 }
 
 .seg-prompt {
   --seg-bg: var(--cal-important-bg);
   --seg-fg: var(--cal-important-fg);
-  --seg-border: #C7A653;
+  --seg-border: #1B1F3B;
 }
 
 /* Item Drawer */
@@ -1502,10 +1500,10 @@ dialog::backdrop {
   font-family: var(--font-data);
 }
 
-.tag-task { background: var(--cal-work-bg); color: var(--cal-work-fg); border: 1px solid #9DC398; }
-.tag-event { background: var(--cal-meetings-bg); color: var(--cal-meetings-fg); border: 1px solid #9CB8D4; }
-.tag-tool { background: var(--cal-reminders-bg); color: var(--cal-reminders-fg); border: 1px solid #B7A8CF; }
-.tag-prompt { background: var(--cal-important-bg); color: var(--cal-important-fg); border: 1px solid #D1B87F; }
+.tag-task { background: var(--cal-work-bg); color: var(--cal-work-fg); border: 1px solid #1B1F3B; }
+.tag-event { background: var(--cal-meetings-bg); color: var(--cal-meetings-fg); border: 1px solid #1B1F3B; }
+.tag-tool { background: var(--cal-reminders-bg); color: var(--cal-reminders-fg); border: 1px solid #1B1F3B; }
+.tag-prompt { background: var(--cal-important-bg); color: var(--cal-important-fg); border: 1px solid #1B1F3B; }
 
 .ai-note {
   font-size: 15px;
@@ -1915,7 +1913,7 @@ dialog::backdrop {
 [data-theme="dark"] .msg-mine .bubble {
   background: var(--citron);
   border-color: var(--citron-dark);
-  color: #171915;
+  color: #14172E;
 }
 
 .msg time {
@@ -2005,7 +2003,7 @@ dialog::backdrop {
 
 .invite code {
   background: var(--citron);
-  color: #171915;
+  color: #14172E;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   font-family: var(--font-data);
@@ -2089,23 +2087,23 @@ dialog::backdrop {
   padding: 56px;
   overflow: hidden;
   position: relative;
-  background: radial-gradient(circle at 30% 50%, #292D25 0%, #171915 100%);
+  background: radial-gradient(circle at 30% 50%, #23284A 0%, #14172E 100%);
 }
 
 .auth-brand-statement {
   margin-bottom: 24px;
-  color: #F4F1E9;
+  color: #FFF8F0;
 }
 
 .auth-brand-statement h2 {
   font-size: clamp(28px, 3.5vw, 44px);
-  color: #F4F1E9;
+  color: #FFF8F0;
   letter-spacing: -0.04em;
   margin-bottom: 8px;
 }
 
 .auth-brand-statement p {
-  color: #AAA79C;
+  color: #B9BCD6;
   font-size: 16px;
   max-width: 36ch;
 }
@@ -2378,7 +2376,7 @@ dialog::backdrop {
   top: 10%;
   left: 5%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(169, 201, 87, 0.16) 0%, rgba(169, 201, 87, 0) 65%);
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.16) 0%, rgba(255, 107, 53, 0) 65%);
   animation: glowDrift 14s ease-in-out infinite;
   pointer-events: none;
 }
@@ -2509,8 +2507,8 @@ dialog::backdrop {
 }
 
 @keyframes dotPulse {
-  0% { box-shadow: 0 0 0 0 rgba(169, 201, 87, 0.6); }
-  80%, 100% { box-shadow: 0 0 0 8px rgba(169, 201, 87, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.6); }
+  80%, 100% { box-shadow: 0 0 0 8px rgba(255, 107, 53, 0); }
 }
 
 .home-title {
@@ -2650,7 +2648,7 @@ dialog::backdrop {
 
 .home-day.is-today b {
   background: var(--citron);
-  color: #20221F;
+  color: #1B1F3B;
   border-radius: var(--radius-sm);
   animation: popIn 500ms 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
@@ -2662,7 +2660,7 @@ dialog::backdrop {
   height: 30px;
   line-height: 28px;
   font-size: 12px;
-  box-shadow: 2px 2px 0 rgba(32, 34, 31, 0.08);
+  box-shadow: 2px 2px 0 rgba(27, 31, 59, 0.08);
   animation: bandGrow 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--i) * 150ms + 900ms);
 }
@@ -2760,10 +2758,10 @@ dialog::backdrop {
 
 .home-feature:hover .home-feature-icon { rotate: -8deg; }
 
-.tone-task { --fi-bg: var(--cal-work-bg); --fi-fg: var(--cal-work-fg); --fi-border: #9DC398; }
-.tone-event { --fi-bg: var(--cal-meetings-bg); --fi-fg: var(--cal-meetings-fg); --fi-border: #9CB8D4; }
-.tone-tool { --fi-bg: var(--cal-reminders-bg); --fi-fg: var(--cal-reminders-fg); --fi-border: #B7A8CF; }
-.tone-prompt { --fi-bg: var(--cal-important-bg); --fi-fg: var(--cal-important-fg); --fi-border: #D1B87F; }
+.tone-task { --fi-bg: var(--cal-work-bg); --fi-fg: var(--cal-work-fg); --fi-border: #1B1F3B; }
+.tone-event { --fi-bg: var(--cal-meetings-bg); --fi-fg: var(--cal-meetings-fg); --fi-border: #1B1F3B; }
+.tone-tool { --fi-bg: var(--cal-reminders-bg); --fi-fg: var(--cal-reminders-fg); --fi-border: #1B1F3B; }
+.tone-prompt { --fi-bg: var(--cal-important-bg); --fi-fg: var(--cal-important-fg); --fi-border: #1B1F3B; }
 
 /* Fade cards in as they scroll into view, where the browser supports it. */
 @supports (animation-timeline: view()) {
@@ -2776,14 +2774,14 @@ dialog::backdrop {
 
 /* Closing band: always dark, like the sign-in side panel */
 .home-closing {
-  background: radial-gradient(circle at 50% 0%, #292D25 0%, #171915 70%);
-  color: #F4F1E9;
+  background: radial-gradient(circle at 50% 0%, #23284A 0%, #14172E 70%);
+  color: #FFF8F0;
   overflow: hidden;
 }
 
 .home-marquee {
   padding: 28px 0;
-  border-bottom: 1px solid #2D302A;
+  border-bottom: 1px solid #2C3156;
   mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
 }
 
@@ -2823,25 +2821,25 @@ dialog::backdrop {
 
 .home-closing-body h2 {
   max-width: 16ch;
-  color: #F4F1E9;
+  color: #FFF8F0;
   font-size: clamp(34px, 5vw, 60px);
   letter-spacing: -0.045em;
   line-height: 1;
 }
 
 .btn.home-closing-btn {
-  background: #A9C957;
-  border-color: #A9C957;
-  color: #171915;
+  background: #FF6B35;
+  border-color: #FF6B35;
+  color: #14172E;
   font-weight: 650;
   box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4);
 }
 
 .btn.home-closing-btn:hover:not(:disabled) {
-  background: #B7D76B;
-  border-color: #B7D76B;
-  color: #171915;
-  box-shadow: 4px 4px 0 #F4F1E9;
+  background: #FF8A5C;
+  border-color: #FF8A5C;
+  color: #14172E;
+  box-shadow: 4px 4px 0 #FFF8F0;
 }
 
 .home-footer {
@@ -2851,8 +2849,8 @@ dialog::backdrop {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid #2D302A;
-  color: #8D8F84;
+  border-top: 1px solid #2C3156;
+  color: #B9BCD6;
   font-family: var(--font-data);
   font-size: 12px;
 }

@@ -5,16 +5,20 @@ import { supabaseServer } from "@/lib/supabase/server";
 /**
  * Where the sign-up confirmation email and Google/GitHub sign-in land.
  * Supabase links a Google or GitHub sign-in to an existing account with the same
- * verified email, so all three ways in reach the same Calnix account.
+ * verified email, so all three ways in reach the same DTA-Cal account.
+ * Password-reset links come here too, with ?next=/reset-password.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = publicOrigin(request);
   const code = url.searchParams.get("code");
+  // Only same-site paths, so the link can't be used to send people elsewhere.
+  const next = url.searchParams.get("next");
+  const destination = next && /^\/(?!\/)[\w\-/]*$/.test(next) ? next : "/calendar";
   if (code) {
     const supabase = await supabaseServer();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL("/calendar", origin));
+    if (!error) return NextResponse.redirect(new URL(destination, origin));
   }
   // Providers report a cancelled or refused sign-in with ?error=...
   const reason = url.searchParams.has("error") ? "oauth" : "confirm";

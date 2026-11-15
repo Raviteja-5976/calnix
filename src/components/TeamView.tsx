@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import { Check, Copy, Plus, RefreshCw, Trash2, Users } from "lucide-react";
+import { Check, Copy, Plus, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import type { Member, Team } from "@/lib/types";
 import { Avatar, useWorkspace } from "./WorkspaceShell";
@@ -44,6 +44,32 @@ export function TeamView() {
           {error}
         </p>
       )}
+
+      <section className="card ai-settings">
+        <div>
+          <h2 className="inline-icon">
+            <Sparkles size={18} /> AI features
+          </h2>
+          <p className="muted small">
+            AI never runs on its own: it only drafts descriptions, covers, plans and edits when someone clicks an AI button,
+            and every draft is reviewed before it is saved. Each person has an hourly AI limit.
+          </p>
+        </div>
+        {isAdmin ? (
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={org.ai_enabled}
+              onChange={(e) => run(supabaseBrowser().from("organizations").update({ ai_enabled: e.target.checked }).eq("id", org.id))}
+            />
+            <span>{org.ai_enabled ? "On for everyone" : "Off for everyone"}</span>
+          </label>
+        ) : (
+          <span className={`status-pill ${org.ai_enabled ? "status-done" : "status-blocked"}`}>
+            {org.ai_enabled ? "On" : "Turned off by an admin"}
+          </span>
+        )}
+      </section>
 
       <div className="team-list">
         {teams.map((team) => (
