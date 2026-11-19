@@ -142,11 +142,34 @@ export interface ConversationSummary {
   unread: number;
 }
 
+/** A file sent in chat. Opened through /api/chat/files/<message id>/<index>. */
+export interface Attachment {
+  key: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string | null;
   body: string;
+  attachments: Attachment[];
+  created_at: string;
+}
+
+export type NotificationKind = "message" | "project" | "team" | "mention";
+
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  actor_id: string | null;
+  title: string;
+  body: string | null;
+  link: string;
+  count: number;
+  read_at: string | null;
   created_at: string;
 }
 

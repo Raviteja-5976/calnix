@@ -11,17 +11,22 @@ import {
   ListTodo as TasksIcon,
   MessageSquare as ChatIcon,
   Users as TeamIcon,
+  UserRound as ProfileIcon,
   Search,
   MoreHorizontal,
   X,
   Sun,
   Moon,
   LogOut,
+  Bell,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { subscribeToTable, supabaseBrowser } from "@/lib/supabase/browser";
 import { useProjects } from "@/lib/use-projects";
 import type { Item, ItemKind, Member, Organization, Project, Team } from "@/lib/types";
 import { CommandPalette } from "./CommandPalette";
+import { NotificationsPanel, useNotifications } from "./Notifications";
 import { ItemDrawer } from "./ItemDrawer";
 import { ItemForm, type ItemDefaults } from "./ItemForm";
 
@@ -62,6 +67,7 @@ const NAV = [
   // On phones these move into the "More" sheet so the bottom bar stays readable.
   { href: "/library", label: "Library", icon: LibraryIcon, secondary: true },
   { href: "/team", label: "Team", icon: TeamIcon, secondary: true },
+  { href: "/profile", label: "Profile", icon: ProfileIcon, secondary: true },
 ];
 
 const THEME_KEY = "calnix-theme";
@@ -73,6 +79,26 @@ function subscribeTheme(onChange: () => void) {
 }
 const readTheme = () =>
   document.documentElement.getAttribute("data-theme") === "dark" ? ("dark" as const) : ("light" as const);
+
+// Desktop sidebar: full width or icons only, remembered in this browser.
+const RAIL_KEY = "calnix-rail";
+let railMemory: boolean | null = null; // Used when storage is blocked.
+function subscribeRail(onChange: () => void) {
+  window.addEventListener("calnix:rail", onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener("calnix:rail", onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+function readRail() {
+  if (railMemory !== null) return railMemory;
+  try {
+    return localStorage.getItem(RAIL_KEY) === "collapsed";
+  } catch {
+    return false;
+  }
+}
 
 export function WorkspaceShell(props: {
   userId: string;
@@ -95,6 +121,22 @@ export function WorkspaceShell(props: {
   const { projects } = useProjects(org.id);
   // The theme lives on <html>, set before paint by the script in the root layout.
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "light" as const);
+  const railCollapsed = useSyncExternalStore(subscribeRail, readRail, () => false);
+  const notifications = useNotifications(org.id, userId);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const closeNotifications = useCallback(() => setNotifOpen(false), []);
+
+  const toggleRail = useCallback(() => {
+    const next = !readRail();
+    railMemory = next;
+    try {
+      localStorage.setItem(RAIL_KEY, next ? "collapsed" : "open");
+      railMemory = null;
+    } catch {
+      // Private mode: the choice lasts for this page only.
+    }
+    window.dispatchEvent(new Event("calnix:rail"));
+  }, []);
 
   const toggleTheme = useCallback(() => {
     const next = readTheme() === "light" ? "dark" : "light";
@@ -173,7 +215,7 @@ export function WorkspaceShell(props: {
 
   return (
     <WorkspaceContext.Provider value={value}>
-      <div className={`shell${focus ? " shell-focus" : ""}`}>
+      <div className={`shell${focus ? " shell-focus" : ""}${railCollapsed && !focus ? " rail-collapsed" : ""}`}>
         {!focus && (
         <nav className="rail" aria-label="Main">
           <Link href="/calendar" className="rail-brand" aria-label="DTA-Cal home">
@@ -190,6 +232,37 @@ export function WorkspaceShell(props: {
           </button>
 
           <ul>
+            <li className="rail-secondary">
+              {/* An <a> so it shares the nav item styles at every screen size. */}
+              <a
+                href="#notifications"
+                role="button"
+                className="rail-bell"
+                aria-expanded={notifOpen}
+                aria-label={
+                  notifications.unread ? `Notifications, ${notifications.unread} unread` : "Notifications"
+                }
+                title="Notifications"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setNotifOpen((open) => !open);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === " ") {
+                    e.preventDefault();
+                    setNotifOpen((open) => !open);
+                  }
+                }}
+              >
+                <Bell aria-hidden="true" />
+                <span>Notifications</span>
+                {notifications.unread > 0 && (
+                  <em className="badge" aria-hidden="true">
+                    {notifications.unread > 99 ? "99+" : notifications.unread}
+                  </em>
+                )}
+              </a>
+            </li>
             {NAV.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.href);
@@ -217,20 +290,33 @@ export function WorkspaceShell(props: {
               >
                 <MoreHorizontal aria-hidden="true" />
                 <span>More</span>
+                {notifications.unread > 0 && <i className="rail-more-dot" aria-label="New notifications" />}
               </button>
             </li>
           </ul>
 
           <div className="rail-foot">
-            <button
-              type="button"
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-              title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-            >
-              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
+            <div className="rail-foot-row">
+              <button
+                type="button"
+                className="theme-toggle-btn"
+                onClick={toggleTheme}
+                aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+                title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+              >
+                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
+              <button
+                type="button"
+                className="theme-toggle-btn rail-collapse"
+                onClick={toggleRail}
+                aria-label={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-pressed={railCollapsed}
+                title={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {railCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+              </button>
+            </div>
 
             {orgs.length > 1 ? (
               <select aria-label="Organization" value={org.id} onChange={(e) => switchOrg(e.target.value)}>
@@ -254,6 +340,14 @@ export function WorkspaceShell(props: {
         </nav>
         )}
         <div className="workspace">{children}</div>
+        {notifOpen && !focus && (
+          <NotificationsPanel
+            state={notifications}
+            memberById={value.memberById}
+            onOpenItem={openItem}
+            onClose={closeNotifications}
+          />
+        )}
       </div>
 
       {moreOpen && !focus && (
@@ -275,6 +369,17 @@ export function WorkspaceShell(props: {
             >
               <Search size={18} aria-hidden="true" />
               Search
+            </button>
+            <button
+              className="more-row"
+              onClick={() => {
+                setMoreOpen(false);
+                setNotifOpen(true);
+              }}
+            >
+              <Bell size={18} aria-hidden="true" />
+              Notifications
+              {notifications.unread > 0 && <em className="badge more-badge">{notifications.unread}</em>}
             </button>
             {NAV.filter((n) => n.secondary).map((item) => {
               const Icon = item.icon;

@@ -24,7 +24,7 @@ let channelSeq = 0;
  */
 export function subscribeToTable(
   name: string,
-  listen: { event: "*" | "INSERT"; table: "items" | "messages" | "projects" | "milestones"; filter?: string },
+  listen: { event: "*" | "INSERT"; table: "items" | "messages" | "projects" | "milestones" | "notifications"; filter?: string },
   onChange: (row: Record<string, unknown>) => void,
 ): () => void {
   const supabase = supabaseBrowser();

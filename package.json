@@ -26,6 +26,7 @@
     "aws4fetch": "^1.0.20",
     "lucide-react": "^1.66.0",
     "next": "16.4.3",
+    "nodemailer": "^7.0.10",
     "openai": "^7.47.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
@@ -34,6 +35,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/nodemailer": "^7.0.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

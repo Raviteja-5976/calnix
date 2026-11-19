@@ -197,6 +197,9 @@ a:not(.btn):not(.project-card):not(.home-brand):not(.auth-logo-badge):not(.back-
   box-shadow: var(--shadow-brutal);
   overflow: hidden;
   gap: 0;
+  /* globals.css pads the group by 2px; with square buttons that left the
+     selected fill floating inside the rounded border instead of filling it. */
+  padding: 0;
 }
 
 .btn-group .btn {
@@ -1598,6 +1601,13 @@ dialog::backdrop {
   top: 16px;
   max-height: calc(100vh - 32px);
   overflow: auto;
+}
+
+/* The sidebar has a fixed height and scrolls as a whole. Without this, flexbox
+   squeezes the file tree down to its min-height and its rows spill over the
+   footer and the trash list below it. */
+.docs-sidebar > * {
+  flex-shrink: 0;
 }
 
 .docs-actions,
@@ -3072,6 +3082,15 @@ details.ai-card:not([open]) {
   box-shadow: none;
   background: var(--surface);
   overflow: auto;
+}
+
+/* "Hide files" sets [hidden], but display: flex above would override the
+   browser's own hidden style and the sidebar would fill the freed column.
+   Phones are handled in responsive.css, where the tree is a drawer. */
+@media (min-width: 801px) {
+  .docs-workspace .docs-sidebar[hidden] {
+    display: none;
+  }
 }
 
 .studio-sidebar-top {

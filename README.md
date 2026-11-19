@@ -56,6 +56,23 @@ Then, in the Supabase dashboard:
 
 `db push` also creates the private `item-images` bucket, so there is nothing to set up for storage. Images count toward your Supabase plan's storage and bandwidth limits.
 
+#### Chat files (Cloudflare R2 CORS)
+
+Pictures, videos and files sent in chat (up to 50 MB each) are stored in the R2 bucket under `chat-files/`. The browser uploads them straight to R2 with a 15-minute signed link, so large videos don't pass through the app server. For that to work, add a CORS rule to the bucket (**R2 > your bucket > Settings > CORS policy**):
+
+```json
+[
+  {
+    "AllowedOrigins": ["http://localhost:3000", "https://YOUR-DOMAIN"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Without it, uploads fall back to going through the app. That works locally, but hosts cap request size (Vercel: about 4.5 MB), so larger files fail there.
+
 ### 3. OpenAI
 
 Add `OPENAI_API_KEY` to `.env.local`. The account needs API credit. OpenAI may also ask you to complete [organization verification](https://platform.openai.com/settings/organization/general) before it allows image generation.
@@ -71,6 +88,31 @@ Open http://localhost:3000, create an account and start an organization. To invi
 ## Deploying
 
 The app runs on any Node.js host. Set the variables from `.env.example`, and set `NEXT_PUBLIC_SITE_URL` to your public address.
+
+### Email and the daily summary
+
+Fill in the `SMTP_*` and `MAIL_FROM` variables. `MAIL_FROM` must be the mailbox you log in with (or an alias of it), or most providers refuse to send. Email is used for three things: confirmation links when someone adds an extra address on their **Profile** page, the daily summary, and notification emails. Check the setup with **Profile > Send me one now**.
+
+Summaries and notification emails need something to call `/api/cron/daily-digest` every 5 minutes with the `CRON_SECRET`. Each call sends every summary that is due and emails notifications that are still unread 5 minutes after they arrived (one email per person per call, following each person's choice on their Profile page). Nothing is sent twice. With Supabase's free scheduler, first enable the `pg_cron` and `pg_net` extensions (**Database > Extensions**), then run this once in the SQL editor:
+
+```sql
+select cron.schedule(
+  'daily-digest',
+  '*/5 * * * *',
+  $$ select net.http_get(
+       url := 'https://YOUR-DOMAIN/api/cron/daily-digest',
+       headers := jsonb_build_object('Authorization', 'Bearer YOUR-CRON-SECRET')
+     ) $$
+);
+```
+
+On Vercel Pro you can use Vercel Cron instead; it sends the `CRON_SECRET` header for you. Vercel's free plan only runs cron jobs once a day, which is too coarse for per-person times.
+
+To check it's running: `select * from cron.job_run_details order by start_time desc limit 5;` and, for what the app answered, `select status_code, content from net._http_response order by created desc limit 5;`. A healthy answer looks like `{"digests":{"sent":0,"skipped":3,"failed":0},"notifications":{"emailed":0,"people":0,"failed":0}}`.
+
+**Hosting on AWS Amplify:** Amplify only gives environment variables to the build, not to the running server. Add a line to the build commands in `amplify.yml` so the server can read them, e.g. `env | grep -e SMTP_ -e MAIL_FROM -e CRON_SECRET -e SUPABASE_SECRET_KEY -e R2_ -e RUNWARE_ >> .env.production` before `npm run build`.
+
+A summary goes out within 5 minutes of each person's chosen time. If the scheduler misses that time by more than 3 hours (for example, the server was down), that day's summary is skipped rather than sent late at night.
 
 AI work runs after the response is sent, so the host has to keep the request alive until it finishes. The routes ask for up to 300 seconds. If your host allows less, AI requests can be cut off, and those items will offer **Try again** after five minutes.
 

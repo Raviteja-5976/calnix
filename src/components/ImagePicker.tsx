@@ -22,6 +22,7 @@ export function ImagePicker({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [originalSize, setOriginalSize] = useState<number | null>(null);
 
   useEffect(() => {
     if (!value) return;
@@ -36,6 +37,7 @@ export function ImagePicker({
     setError(null);
     try {
       onChange(await compressImage(file));
+      setOriginalSize(file.size);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not use that image.");
     } finally {
@@ -50,7 +52,11 @@ export function ImagePicker({
       {value && preview ? (
         <div className="image-picker-preview">
           <img src={preview} alt="" />
-          <span className="hint">{Math.round(value.size / 1000)} KB · ready to upload</span>
+          <span className="hint">
+            {originalSize && originalSize > value.size
+              ? `Compressed ${formatKb(originalSize)} → ${formatKb(value.size)}`
+              : `${formatKb(value.size)} · ready to upload`}
+          </span>
           <button
             type="button"
             className="btn btn-small"
@@ -85,6 +91,9 @@ export function ImagePicker({
     </div>
   );
 }
+
+const formatKb = (bytes: number) =>
+  bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.round(bytes / 1000)} KB`;
 
 /** Sends an already-shrunk image to the item's upload endpoint. */
 export async function uploadItemImage(itemId: string, blob: Blob) {
