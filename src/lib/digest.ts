@@ -1,4 +1,5 @@
-import { esc, sendMail, siteUrl } from "@/lib/mailer";
+import { appUrl, layout, rowText, section, smallLink, stats } from "@/lib/email-layout";
+import { sendMail, siteUrl } from "@/lib/mailer";
 import { localParts, startOfLocalDay } from "@/lib/digest-time";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -132,57 +133,75 @@ export function renderDigest(d: DigestData) {
   const taskTotal = d.overdue.length + d.today.length;
   const subject = `Your day in DTA-Cal: ${taskTotal} task${taskTotal === 1 ? "" : "s"} due, ${unreadTotal} unread message${unreadTotal === 1 ? "" : "s"}`;
 
-  const section = (title: string, rows: string[], empty: string) => `
-    <tr><td style="padding:22px 0 6px;font:700 15px/1.3 Arial,sans-serif;color:#1B1F3B">${esc(title)}</td></tr>
-    <tr><td style="font:14px/1.5 Arial,sans-serif;color:#3E4468">
-      ${rows.length ? `<ul style="margin:0;padding-left:18px">${rows.join("")}</ul>` : `<p style="margin:0;color:#6b7080">${esc(empty)}</p>`}
-    </td></tr>`;
-  const li = (html: string) => `<li style="margin:0 0 6px">${html}</li>`;
-  const link = (path: string, text: string) =>
-    `<a href="${esc(base + path)}" style="color:#E2531C;text-decoration:none;font-weight:700">${esc(text)}</a>`;
-  const taskLine = (t: DigestData["today"][number], showDate: boolean, overdue = false) =>
-    li(
-      `${overdue ? '<strong style="color:#C2256E">Overdue:</strong> ' : ""}${link("/tasks", t.title)}${t.project ? ` <span style="color:#6b7080">· ${esc(t.project)}</span>` : ""}` +
-        `${showDate ? ` <span style="color:#6b7080">· due ${esc(shortDate((t.end_date ?? t.start_date)!))}</span>` : ""}` +
-        `${t.priority === "high" || t.priority === "urgent" ? ` <strong style="color:#C2256E">${esc(t.priority)}</strong>` : ""}`,
-    );
+  const first = d.name.split(" ")[0];
+  const dueOn = (t: DigestData["today"][number]) => shortDate((t.end_date ?? t.start_date)!);
+  const priorityTag = (t: DigestData["today"][number]) =>
+    t.priority === "urgent" || t.priority === "high" ? { text: t.priority, tone: "alert" as const } : undefined;
+  const taskDetail = (t: DigestData["today"][number], extra?: string) =>
+    [t.project, extra].filter(Boolean).join(" · ") || undefined;
 
-  const taskRows = [
-    ...d.overdue.map((t) => taskLine(t, true, true)),
-    ...d.today.map((t) => taskLine(t, false)),
-  ];
-
-  const html = `<!doctype html><html><body style="margin:0;background:#FFF8F0">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:24px 12px">
-  <tr><td align="center">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:2px solid #1B1F3B;border-radius:12px;padding:24px 28px">
-    <tr><td style="font:800 22px/1.2 Arial,sans-serif;color:#1B1F3B">Good day, ${esc(d.name.split(" ")[0])}</td></tr>
-    <tr><td style="padding-top:4px;font:14px Arial,sans-serif;color:#6b7080">${esc(prettyDate(d.localDate))}</td></tr>
-    ${section("Due today and overdue", taskRows, "Nothing due today. Nice.")}
-    ${section("Coming up this week", d.upcoming.map((t) => taskLine(t, true)), "Nothing due in the next 7 days.")}
-    ${section(
-      `Unread messages${unreadTotal ? ` (${unreadTotal})` : ""}`,
-      d.chats.map((c) =>
-        li(`${link(`/chat?c=${c.conversation_id}`, chatName(c))} <span style="color:#6b7080">· ${c.unread} unread</span>` +
-          (c.last_body ? `<br><span style="color:#6b7080">“${esc(c.last_body)}”</span>` : "")),
-      ),
+  const bodyRows =
+    `<tr><td style="padding-top:20px;">${stats([
+      { label: "Overdue", value: d.overdue.length, tone: "alert" },
+      { label: "Due today", value: d.today.length },
+      { label: "Unread", value: unreadTotal },
+    ])}</td></tr>` +
+    section(
+      "Due today & overdue",
+      [
+        ...d.overdue.map((t) => ({
+          href: appUrl("/tasks"),
+          title: t.title,
+          detail: taskDetail(t, `was due ${dueOn(t)}`),
+          tag: { text: "Overdue", tone: "alert" as const },
+        })),
+        ...d.today.map((t) => ({ href: appUrl("/tasks"), title: t.title, detail: taskDetail(t), tag: priorityTag(t) })),
+      ],
+      "Nothing due today. Nice.",
+      taskTotal,
+    ) +
+    section(
+      "Coming up this week",
+      d.upcoming.map((t) => ({
+        href: appUrl("/tasks"),
+        title: t.title,
+        detail: taskDetail(t, `due ${dueOn(t)}`),
+        tag: priorityTag(t),
+      })),
+      "Nothing due in the next 7 days.",
+      d.upcoming.length,
+    ) +
+    section(
+      "Unread messages",
+      d.chats.map((c) => ({
+        href: appUrl(`/chat?c=${c.conversation_id}`),
+        title: chatName(c),
+        quote: c.last_body ?? undefined,
+        tag: { text: `${c.unread} new`, tone: "plain" as const },
+      })),
       "You're all caught up.",
-    )}
-    ${section(
+      unreadTotal,
+    ) +
+    section(
       "Changes today",
       d.changes.map((c) =>
-        li(
-          c.kind === "mention"
-            ? `<strong>${esc(c.actor)}</strong> mentioned you in ${link(c.link, c.title)}`
-            : `<strong>${esc(c.actor)}</strong> ${esc(c.body ?? "")} <span style="color:#6b7080">· ${link(c.link, c.title)}</span>`,
-        ),
+        c.kind === "mention"
+          ? { href: appUrl(c.link), title: c.title, leadHtml: `${rowText(c.actor, true)} mentioned you in`, quote: c.body ?? undefined }
+          : { href: appUrl(c.link), title: c.title, leadHtml: `${rowText(c.actor, true)} ${rowText(c.body ?? "")} ·` },
       ),
       "No changes in your projects or teams so far today.",
-    )}
-    <tr><td style="padding-top:26px;font:12px/1.5 Arial,sans-serif;color:#6b7080">
-      ${link("/calendar", "Open DTA-Cal")} · Change the time or turn this off in your ${link("/profile", "profile")}.
-    </td></tr>
-  </table></td></tr></table></body></html>`;
+      d.changes.length,
+    );
+
+  const html = layout({
+    preheader: `${taskTotal} due, ${unreadTotal} unread, ${d.changes.length} change${d.changes.length === 1 ? "" : "s"} today.`,
+    eyebrow: prettyDate(d.localDate),
+    title: `Good day, ${first}.`,
+    intro: ["Here's where things stand today."],
+    bodyRows,
+    cta: { href: appUrl("/calendar"), label: "Open DTA-Cal" },
+    footnoteHtml: `You get this every day at the time you chose. ${smallLink("/profile", "Change the time or turn it off")}.`,
+  });
 
   const lines = [
     `Good day, ${d.name.split(" ")[0]} — ${prettyDate(d.localDate)}`,

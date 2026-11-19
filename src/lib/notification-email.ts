@@ -1,5 +1,6 @@
 import { emailRecipients } from "@/lib/digest";
-import { esc, sendMail, siteUrl } from "@/lib/mailer";
+import { appUrl, layout, section, smallLink } from "@/lib/email-layout";
+import { sendMail, siteUrl } from "@/lib/mailer";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 /**
@@ -46,27 +47,44 @@ export function renderNotificationEmail(rows: Row[], actors: Map<string, string>
   const items = rows.map((n) => ({ n, ...describe(n, n.actor_id ? actors.get(n.actor_id) ?? "Someone" : "Someone") }));
   const subject = items.length === 1 ? items[0].line : `${items.length} new notifications in DTA-Cal`;
 
-  const html = `<!doctype html><html><body style="margin:0;background:#FFF8F0">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF8F0;padding:24px 12px">
-  <tr><td align="center">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:2px solid #1B1F3B;border-radius:12px;padding:22px 26px">
-    <tr><td style="font:800 19px/1.3 Arial,sans-serif;color:#1B1F3B;padding-bottom:8px">${esc(
-      items.length === 1 ? "New notification" : `${items.length} new notifications`,
-    )}</td></tr>
-    ${items
-      .map(
-        ({ n, line, detail }) => `<tr><td style="padding:10px 0;border-top:1px solid #eee;font:14px/1.5 Arial,sans-serif;color:#1B1F3B">
-          <a href="${esc(base + n.link)}" style="color:#1B1F3B;text-decoration:none;font-weight:700">${esc(line)}</a>
-          ${detail ? `<br><span style="color:#6b7080">${esc(detail)}</span>` : ""}
-        </td></tr>`,
-      )
-      .join("")}
-    <tr><td style="padding-top:18px;font:12px/1.5 Arial,sans-serif;color:#6b7080">
-      <a href="${esc(base + "/calendar")}" style="color:#E2531C;font-weight:700;text-decoration:none">Open DTA-Cal</a>
-      · Choose which notifications you get by email in your
-      <a href="${esc(base + "/profile")}" style="color:#E2531C;font-weight:700;text-decoration:none">profile</a>.
-    </td></tr>
-  </table></td></tr></table></body></html>`;
+  const EYEBROW = { mention: "You were mentioned", message: "New message", project: "Project update", team: "Team update" };
+  const one = items.length === 1 ? items[0] : null;
+  const footnoteHtml = `You're getting this because it was still unread in DTA-Cal. ${smallLink(
+    "/profile",
+    "Choose which notifications you get by email",
+  )}.`;
+
+  const html = one
+    ? layout({
+        preheader: one.detail ?? one.line,
+        eyebrow: EYEBROW[one.n.kind],
+        title: one.line,
+        bodyRows: one.detail
+          ? section(one.n.kind === "project" || one.n.kind === "team" ? "Where" : "Message", [
+              { href: appUrl(one.n.link), title: one.detail },
+            ], "")
+          : undefined,
+        cta: { href: appUrl(one.n.link), label: one.n.kind === "message" || one.n.kind === "mention" ? "Reply in DTA-Cal" : "Open in DTA-Cal" },
+        footnoteHtml,
+      })
+    : layout({
+        preheader: items.map((i) => i.line).join(" · "),
+        eyebrow: "While you were away",
+        title: `${items.length} new notifications`,
+        bodyRows: section(
+          "Unread",
+          items.map(({ n, line, detail }) => ({
+            href: appUrl(n.link),
+            title: line,
+            quote: n.kind === "message" || n.kind === "mention" ? detail ?? undefined : undefined,
+            detail: n.kind === "project" || n.kind === "team" ? detail ?? undefined : undefined,
+            tag: { text: EYEBROW[n.kind].replace("You were ", ""), tone: n.kind === "mention" ? ("alert" as const) : ("plain" as const) },
+          })),
+          "",
+        ),
+        cta: { href: appUrl("/calendar"), label: "Open DTA-Cal" },
+        footnoteHtml,
+      });
 
   const text = [
     ...items.map(({ n, line, detail }) => `- ${line}${detail ? `\n  ${detail}` : ""}\n  ${base}${n.link}`),

@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import { layout } from "@/lib/email-layout";
 import { esc, sendMail, siteUrl } from "@/lib/mailer";
 
 /** Extra emails per account. */
@@ -23,10 +24,18 @@ export async function sendConfirmation(email: string, name: string, token: strin
     to: email,
     subject: "Confirm this email for DTA-Cal",
     text: `${name} added this address to their DTA-Cal account.\n\nConfirm it here (the link works for ${TOKEN_HOURS} hours):\n${url}\n\nIf this wasn't you, ignore this email.`,
-    html: `<div style="font:15px/1.5 Arial,sans-serif;color:#1B1F3B;max-width:520px">
-      <p><strong>${esc(name)}</strong> added this address to their DTA-Cal account.</p>
-      <p><a href="${esc(url)}" style="display:inline-block;padding:10px 18px;background:#FF6B35;color:#1B1F3B;font-weight:700;border:2px solid #1B1F3B;border-radius:8px;text-decoration:none">Confirm email</a></p>
-      <p style="color:#6b7080;font-size:13px">The link works for ${TOKEN_HOURS} hours. If this wasn't you, ignore this email.</p>
-    </div>`,
+    html: layout({
+      preheader: `Confirm this address to get DTA-Cal emails here. The link works for ${TOKEN_HOURS} hours.`,
+      eyebrow: "Confirm your email",
+      title: "Is this your address?",
+      intro: [
+        `${name} added ${email} to their DTA-Cal account, to get the daily summary and notification emails here.`,
+        "Confirm it with one click.",
+      ],
+      cta: { href: url, label: "Confirm this email" },
+      footnoteHtml: `The link works for ${TOKEN_HOURS} hours. If the button doesn't work, paste this into your browser:<br><a href="${esc(
+        url,
+      )}" style="color:#D94E1F; word-break:break-all;">${esc(url)}</a><br><br>Didn't expect this? Ignore it and nothing will be sent here.`,
+    }),
   });
 }
