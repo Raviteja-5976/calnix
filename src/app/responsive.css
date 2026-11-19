@@ -1088,11 +1088,9 @@
   float: left;
 }
 
-/* Day separator: a centred pill that sticks while that day scrolls by. */
+/* Day separator: a centred pill that scrolls away with its messages, so it
+   never covers them. */
 .msg-day {
-  position: sticky;
-  top: 0;
-  z-index: 2;
   display: flex;
   justify-content: center;
   margin: 14px 0 4px;

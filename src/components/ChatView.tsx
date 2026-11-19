@@ -18,6 +18,7 @@ import { ArrowLeft, Download, FileText, Paperclip, Plus, Send, X } from "lucide-
 import { subscribeToTable, supabaseBrowser } from "@/lib/supabase/browser";
 import { fileKind, formatBytes, MAX_FILE_BYTES, MAX_FILES, uploadChatFile } from "@/lib/chat-upload";
 import { compressImage, MAX_UPLOAD_BYTES } from "@/lib/compress-image";
+import { dayLabel, startOfDay, timeLabel } from "@/lib/chat-dates";
 import { encodeMentions, mentionQuery, parseMentions, type Mention } from "@/lib/mentions";
 import type { Attachment, ConversationSummary, Message } from "@/lib/types";
 import { MentionList, useMentionSearch, type MentionOption } from "./MentionPicker";
@@ -43,25 +44,6 @@ const shouldCompress = (file: File) =>
   /^image\/(jpeg|png|webp|bmp|avif|heic|heif)$/.test(file.type) && file.size > MAX_UPLOAD_BYTES;
 
 let pendingSeq = 0;
-
-const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-
-/** WhatsApp-style day headings: Today, Yesterday, a weekday this week, else the date. */
-function dayLabel(iso: string, now = new Date()) {
-  const date = new Date(iso);
-  const days = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days > 1 && days < 7) return date.toLocaleDateString([], { weekday: "long" });
-  return date.toLocaleDateString([], {
-    day: "numeric",
-    month: "long",
-    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
-  });
-}
-
-const timeLabel = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 export function ChatView() {
   const { org, userId, members, memberById, projects, openItem } = useWorkspace();
